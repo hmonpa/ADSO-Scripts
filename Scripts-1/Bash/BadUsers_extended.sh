@@ -15,7 +15,6 @@ if [ $# -ne 0 ]; then
 	elif  [ $1 == "-t" ] && [ $# -eq 2 ]; then
         t=1
 		aux=$2
-
 		# Pasar meses a dias (se asume que 1 mes = 30 dias)
 		if [ ${aux: -1} == "m" ]; then
 			time=$((${aux%"m"} * 30))
