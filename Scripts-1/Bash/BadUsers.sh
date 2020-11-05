@@ -1,44 +1,86 @@
-# Primer script en Bash
 #!/bin/bash
-p=0                                 # Variables globales
-
+p=0
+t=0
+time=0
 usage="Usage: BadUsers.sh [-p]"
-# detecció de opcions d'entrada: només son vàlids: sense paràmetres i -p
-if [ $# -ne 0 ]; then               # Si núm de parámetros diferente a 0
-    if  [ $# -eq 1 ]; then          # Si Núm de parámetros igual a 1
-        if [ $1 == "-p" ]; then     # Si parámetro 1 coincide con p   (El parámetro 0 es el propio script)
-            p=1
-        else
-            echo $usage; exit 1     # Printea la variable usage por pantalla y sale del programa
-        fi 	 
-    else 
-        echo $usage; exit 1
+usage2="Usage: BadUsers.sh [-t] [time (d/m/a)]"
+
+#Detecciones de parametros: sin parametros, -p y -t
+if [ $# -ne 0 ]; then
+    if  [ $# -ge 1 ]; then
+        if [ $1 == "-p" ]; then 
+        	p=1
+	elif  [ $1 == "-t" ] && [ $# -ne 2 ]; then
+		 echo $usage2; exit 1 
+	elif  [ $1 == "-t" ] && [ $# -eq 2 ]; then
+        	t=1
+		aux=$2
+
+		#Pasar meses a dias (cada mes tiene 30 dias)
+		if [ ${aux: -1} == "m" ]; then
+			time=$((${aux%"m"} * 30))
+
+		#Pasar años a dias (cada any tiene 365 dias)
+		elif [ ${aux: -1} == "a" ]; then
+			time=$((${aux%"a"} * 365))
+
+		#Simplemente dias
+		else
+			time=${aux%"d"}
+		fi
+			
+	else
+        	echo $usage; exit 1
+    	fi
     fi
 fi
-echo "Usuaris invàlids: "
-# afegiu una comanda per llegir el fitxer de password i només agafar el camp de # nom de l'usuari
-for user in `cat /etc/passwd | cut -d: -f1`; do 
+
+for user in `cat /etc/passwd | cut -d: -f1`; do
     home=`cat /etc/passwd | grep "^$user\>" | cut -d: -f6`
-    if [ -d $home ]; then
-        num_fich=`find $home -type f -user $user | wc -l`
-        # hace find de los usuarios de la variable $home, que tienen archivos de tipo f en la variable user
-		# wc -l cuenta el número de líneas
+    
+   if [ -d $home ]; then
+	num_fich=`find $home -type f -user $user | wc -l`
+	 #hace find de los archivos de tipo f de la variable user
+	 #wc -l cuenta el número de líneas
     else
-        num_fich=0
+	num_fich=0
     fi
  
     if [ $num_fich -eq 0 ] ; then
-        if [ $p -eq 1 ]; then           # si usamos el comando -p, muestra sólo los usuarios completamente invalidos
+	# si hay flag -p
+	if [ $p -eq 1 ]; then 
+ 
+	   user_proc=`ps -u $user --no-headers | wc -l` 
+ 	    
+	   if [ $user_proc -eq 0 ]; then
+	        echo "$user"
+	   fi
 
-# afegiu una comanda per detectar si l'usuari te processos en execució, 
-# si no te ningú la variable $user_proc ha de ser 0
-            user_proc=`ps -u $user --no-headers | wc -l`
-            
-            if [ $user_proc -eq 0 ]; then
-                echo "$user"
-            fi
-        else
-            echo "$user"
-        fi
-    fi    
+	#si hay el flag -t
+	elif [ $t -eq 1 ]; then
+		user_print=0
+		user_proc2=`lastlog -u $user -t $time | sed 1d | wc -l`
+		
+		# Comprobamos que no ha iniciado sesion en la franja de tiempo $time
+
+		if [ $user_proc2 -eq 0 ]; then
+			user_print=1
+			echo "$user"
+		fi
+		
+		#Para no sacar por pantalla dos veces el mismo usuario usamos user_print
+		#La condicion de abajo comprobamos la modificacion de archivos en un intervalo de tiempo
+
+		if [ $user_print -eq 0 ]; then
+			num_fich=`find $home -type f -user $user -mtime $time | wc -l`
+			if [ $num_fich -eq 0 ]; then
+				echo "$user"
+			fi
+		fi
+	
+	#si no hay ningun flag
+	else
+	   echo "$user"
+	fi
+    fi
 done

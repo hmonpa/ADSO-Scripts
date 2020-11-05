@@ -61,9 +61,12 @@ if [ $# -eq 1 ]; then		# Se pasa un sólo argumento
 				i=0
 				b=1
 				while (($i<3)) && (($b==1)); do
+					#echo "ocupacio: while $ocupacio"
 					if (( ($ocupacio/1024)>=1 )); then
 						ocupacio=$(($ocupacio/1024))
+						#echo "ocupacio: $ocupacio"
 						i=$(($i+1))
+						#echo "i: $i"
 					else
 						b=0
 					fi
