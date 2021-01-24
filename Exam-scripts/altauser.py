@@ -13,7 +13,6 @@ def run_command(command):
 
 #-----------------------------------MAIN---------------------------------------------------------
 '''Para que se copie el prompt general para todos tienes que ser root y hacer cp -r /etc/skel/. [ruta de usuario]. De esta manera se crearan los archivos .profile y bashrc predeterminados para cada usuario.'''
-# El passwd lo pones tu con la polla.
 
 if sys.argv[3]=='PO' and len(sys.argv) != 6:
 	print ('Un usuario de tipo PO ha de pertenecer a PO, SM y ED')
